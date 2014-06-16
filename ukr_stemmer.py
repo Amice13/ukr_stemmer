@@ -35,10 +35,11 @@ class UkrainianStemmer():
          self.RV = ''
 
      def ukstemmer_search_preprocess(self,word):
-         word = word.decode('utf-8').lower().encode('utf-8')
+         word = word.decode('utf-8').lower()
          word = word.replace("'","")
-         word = word.replace("ё","е")
-         word = word.replace("ъ","ї")
+         word = word.replace(u"ё",u"е")
+         word = word.replace(u"ъ",u"ї")
+         word = word.encode('utf-8')
          return word
 
      def s(self,st, reg, to):
@@ -48,35 +49,34 @@ class UkrainianStemmer():
 
      def stem_word(self):
           word = self.ukstemmer_search_preprocess(self.word)
-          p = re.search(self.rvre,word.decode('utf-8'))
-          start = word.decode('utf-8')[0:p.span()[1]]
-          self.RV = word.decode('utf-8')[p.span()[1]:len(word)]
+          if not re.search(u'[аеиоуюяіїє]',word.decode('utf-8')):
+              stem = word.decode('utf-8')
+          else:
+              p = re.search(self.rvre,word.decode('utf-8'))
+              start = word.decode('utf-8')[0:p.span()[1]]
+              self.RV = word.decode('utf-8')[p.span()[1]:]
 
-          # Step 1
-          if not self.s(self.RV,self.perfectiveground,''):
+              # Step 1
+              if not self.s(self.RV,self.perfectiveground,''):
               
-              self.s(self.RV,self.reflexive,'')
-              if self.s(self.RV,self.adjective,''):
-                  self.s(self.RV,self.participle,'')
-              else:
-                  if not self.s(self.RV,self.verb,''): self.s(self.RV,self.noun,'')
-          # Step 2
-          self.s(self.RV,u'и$','')
-
-          # Step 3
-          if re.search(self.derivational,self.RV):
-               self.s(self.RV,u'ость$','')
-
-          # Step 4
-          if self.s(self.RV,'ь$',''):
-               self.s(self.RV,'ейше?$','')
-               self.s(self.RV,'нн$','н')
-
-          stem = start + self.RV
+                  self.s(self.RV,self.reflexive,'')
+                  if self.s(self.RV,self.adjective,''):
+                      self.s(self.RV,self.participle,'')
+                  else:
+                      if not self.s(self.RV,self.verb,''): self.s(self.RV,self.noun,'')
+              # Step 2
+              self.s(self.RV,u'и$','')
+    
+              # Step 3
+              if re.search(self.derivational,self.RV):
+                   self.s(self.RV,u'ость$','')
+    
+              # Step 4
+              if self.s(self.RV,u'ь$',''):
+                   self.s(self.RV,u'ейше?$','')
+                   self.s(self.RV,u'нн$',u'н')
+    
+              stem = start + self.RV
           return stem
 
-# Use of class
 
-word = raw_input('Word for stemming:')
-stemmed = UkrainianStemmer(word)
-print stemmed.stem_word()
